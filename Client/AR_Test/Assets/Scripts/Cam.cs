@@ -15,7 +15,7 @@ public class Cam : MonoBehaviour
     Socket image_sock;
     Socket message_sock;
 
-    const string IP = "192.168.43.133";
+    const string IP = "192.168.0.100";
     
     // Start is called before the first frame update
     void Start()
