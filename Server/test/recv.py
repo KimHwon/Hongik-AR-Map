@@ -9,8 +9,10 @@ from queue import Queue
 import threading
 
 import traceback
+import os
 
 PORT = 50020
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def image_reciver(port: int, message_que: Queue, result_que: Queue) -> None:
     def recv_int(sock: socket.socket) -> int:
@@ -126,6 +128,11 @@ if __name__ == '__main__':
     last_img = None
 
     save_img = False
+    save_img_idx = 0
+    os.makedirs(f'{BASE_DIR}/save-img', exist_ok=True)
+    while os.path.isfile(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png'):
+        save_img_idx += 1
+
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
         if not recv_que.empty():
             msg = recv_que.get().decode('utf-8')
@@ -187,6 +194,9 @@ if __name__ == '__main__':
                 last_img = img
                 last_detect = (kp_trn, des_trn)
                 save_img = False
+
+                cv2.imwrite(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png', img)
+                save_img_idx += 1
 
         except:
             print(traceback.format_exc())
