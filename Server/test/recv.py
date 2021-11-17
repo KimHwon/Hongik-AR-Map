@@ -178,7 +178,8 @@ if __name__ == '__main__':
                 tr_mat, re1, re2 = estimate_diff(diff_pts)
                 if re1 > RESIDUAL_THRESHOLD or re2 > RESIDUAL_THRESHOLD:
                     send_que.put('cannot find')
-                    print('cannot find')
+                else:
+                    print(decompose_transform(tr_mat))
 
                 src_pts = np.float32([kp_qry[m.queryIdx].pt for m in best_matches])
                 dst_pts = np.float32([kp_trn[m.trainIdx].pt for m in best_matches])

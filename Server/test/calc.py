@@ -41,8 +41,14 @@ def estimate_diff(diff_list: list):
     ]), re1[0], re2[0]
 
 def decompose_transform(mat: np.ndarray):
-    trans = mat[:,2]
+    trans = mat[:,2][:2]
     scale = np.array([
-        
+        np.linalg.norm(mat[:,0][:2]),
+        np.linalg.norm(mat[:,1][:2])
     ])
-    return trans
+    rotate = np.stack([
+        mat[:,0] / scale[0],
+        mat[:,1] / scale[1],
+        np.array([0., 0., 1.])
+    ], axis=0).T
+    return trans, scale, rotate
