@@ -11,12 +11,13 @@ import threading
 import traceback
 import os
 
-from calc import estimate_diff2
+from calc import estimate_diff, decompose_transform
 
 PORT = 50020
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-MATCH_FILTER = 30
+MATCH_FILTER = 20
+RESIDUAL_THRESHOLD = 20000
 
 def image_reciver(port: int, message_que: Queue, result_que: Queue) -> None:
     def recv_int(sock: socket.socket) -> int:
@@ -174,7 +175,10 @@ if __name__ == '__main__':
                     vec_img = cv2.arrowedLine(vec_img, (sx, sy), (ex, ey), (255, 0, 0), 1)
                     diff_pts.append((sx, sy, ex, ey))
                 cv2.imshow('vec', vec_img)
-                estimate_diff2(diff_pts)
+                tr_mat, re1, re2 = estimate_diff(diff_pts)
+                if re1 > RESIDUAL_THRESHOLD or re2 > RESIDUAL_THRESHOLD:
+                    send_que.put('cannot find')
+                    print('cannot find')
 
                 src_pts = np.float32([kp_qry[m.queryIdx].pt for m in best_matches])
                 dst_pts = np.float32([kp_trn[m.trainIdx].pt for m in best_matches])
