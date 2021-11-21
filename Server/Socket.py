@@ -2,12 +2,12 @@ import socket
 from threading import Thread
 from queue import Queue
 import traceback
-from typing import Any
+from typing import *
 
 from .Config import *
-from .Logger import GetLogger
+from .Logger import get_logger
 
-logger = GetLogger(__name__)
+logger = get_logger(__name__)
 
 class CloseSocket(Exception):
     pass

@@ -2,7 +2,7 @@ import logging
 
 from .Config import *
 
-def GetLogger(name: str = None):
+def get_logger(name: str = None):
     logger = logging.getLogger(name)
     if DEBUG:
         logger.setLevel(logging.DEBUG)
