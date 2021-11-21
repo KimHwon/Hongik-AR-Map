@@ -1,11 +1,30 @@
-import recv
-from queue import Queue
+from typing import Callable, ParamSpec, Concatenate, TypeVar
 
-s = b'\x01\x23\xff\x00\x45\x67\x89\xab'
-idx = s.find(b'\xff\x00')
-for b in s[:idx]:
-    print(hex(b))
+Param = ParamSpec("Param")
+RetType = TypeVar("RetType")
+OriginalFunc = Callable[Param, RetType]
+DecoratedFunc = Callable[Param, RetType]
 
-l = []
-l.append(s[:0])
-print(l)
+def get_authenticated_user(): return "John"
+
+def inject_user() -> Callable[[OriginalFunc], DecoratedFunc]:
+    def decorator(func: OriginalFunc) -> DecoratedFunc:
+        def wrapper(*args, **kwargs) -> RetType:
+            user = get_authenticated_user()
+            if user is None:
+                raise Exception("Don't!")
+            return func(*args, user, **kwargs)  # <- call signature modified
+
+        return wrapper
+
+    return decorator
+
+
+@inject_user()
+def foo(a: int, username: str) -> bool:
+    print(username)
+    return bool(a % 2)
+
+
+foo(2)      # Type check OK
+foo("no!")  # Type check should fail

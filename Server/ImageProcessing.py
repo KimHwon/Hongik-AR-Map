@@ -10,21 +10,25 @@ from typing import *
 from .Config import *
 from .Logger import get_logger
 
-Mat = np.ndarray
-
-class ExceptionWrapper:
-    def __init__(self, func):
-        self.func = func
-    def __call__(self, *args, **kwargs):
-        try:
-            return self.func(*args, **kwargs)
-        except:
-            logger.error(traceback.format_exc())
-        return None
-
-
 logger = get_logger(__name__)
 ImageFile.LOAD_TRUNCATED_IMAGES = True
+
+
+Mat = np.ndarray
+FuncParam = ParamSpec('FuncParam')
+FuncRetType = TypeVar('FuncRetType')
+FuncType = Callable[FuncParam, FuncRetType]
+def ExceptionWrapper() -> Callable[[FuncType], FuncType]:
+    def decorator(func: FuncType) -> FuncType:
+        def wrapper(*args, **kwargs) -> FuncRetType:
+            try:
+                return func(*args, **kwargs)
+            except:
+                logger.error(traceback.format_exc())
+            return None
+        return wrapper
+    return decorator
+
 
 orb = cv2.ORB_create()
 bfm = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
