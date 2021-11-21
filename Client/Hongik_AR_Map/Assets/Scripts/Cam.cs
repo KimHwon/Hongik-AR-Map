@@ -15,8 +15,12 @@ public class Cam : MonoBehaviour
     Socket image_sock = null;
     Socket message_sock = null;
 
+<<<<<<< Updated upstream:Client/AR_Test/Assets/Scripts/Cam.cs
     string IP = "192.168.0.100";
     byte[] ETX = new byte[] { 0x3 };
+=======
+    const string IP = "172.30.1.47";
+>>>>>>> Stashed changes:Client/Hongik_AR_Map/Assets/Scripts/Cam.cs
     
     // Start is called before the first frame update
     void Start()
