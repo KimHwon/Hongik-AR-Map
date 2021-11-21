@@ -9,8 +9,15 @@ from queue import Queue
 import threading
 
 import traceback
+import os
+
+from calc import estimate_diff, decompose_transform
 
 PORT = 50020
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+MATCH_FILTER = 20
+RESIDUAL_THRESHOLD = 20000
 
 def image_reciver(port: int, message_que: Queue, result_que: Queue) -> None:
     def recv_int(sock: socket.socket) -> int:
@@ -126,6 +133,11 @@ if __name__ == '__main__':
     last_img = None
 
     save_img = False
+    save_img_idx = 0
+    os.makedirs(f'{BASE_DIR}/save-img', exist_ok=True)
+    while os.path.isfile(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png'):
+        save_img_idx += 1
+
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
         if not recv_que.empty():
             msg = recv_que.get().decode('utf-8')
@@ -150,17 +162,24 @@ if __name__ == '__main__':
             if last_detect != None and (not des_qry is None and not des_trn is None):
                 matches = bfm.match(des_qry, des_trn)
                 matches = sorted(matches, key = lambda x:x.distance)
-                best_matches = matches[:20]
+                best_matches = matches[:MATCH_FILTER]
 
                 match_img = cv2.drawMatches(last_img, kp_qry, img, kp_trn, best_matches, None, flags=2)
                 cv2.imshow('cmp', match_img)
 
                 vec_img = img.copy()
+                diff_pts = []
                 for m in best_matches:
                     sx, sy = map(int, kp_qry[m.queryIdx].pt)
                     ex, ey = map(int, kp_trn[m.trainIdx].pt)
                     vec_img = cv2.arrowedLine(vec_img, (sx, sy), (ex, ey), (255, 0, 0), 1)
+                    diff_pts.append((sx, sy, ex, ey))
                 cv2.imshow('vec', vec_img)
+                tr_mat, re1, re2 = estimate_diff(diff_pts)
+                if re1 > RESIDUAL_THRESHOLD or re2 > RESIDUAL_THRESHOLD:
+                    send_que.put('cannot find')
+                else:
+                    print(decompose_transform(tr_mat))
 
                 src_pts = np.float32([kp_qry[m.queryIdx].pt for m in best_matches])
                 dst_pts = np.float32([kp_trn[m.trainIdx].pt for m in best_matches])
@@ -187,6 +206,9 @@ if __name__ == '__main__':
                 last_img = img
                 last_detect = (kp_trn, des_trn)
                 save_img = False
+
+                cv2.imwrite(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png', img)
+                save_img_idx += 1
 
         except:
             print(traceback.format_exc())

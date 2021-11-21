@@ -15,7 +15,7 @@ public class Cam : MonoBehaviour
     Socket image_sock;
     Socket message_sock;
 
-    const string IP = "192.168.0.100";
+    string IP = "192.168.0.100";
     
     // Start is called before the first frame update
     void Start()
@@ -25,6 +25,21 @@ public class Cam : MonoBehaviour
         webCamTexture.Play();
 
         //SetText("DebugText", webCamTexture.width.ToString() + ", " + webCamTexture.height.ToString());
+        string configPath = Application.persistentDataPath + "/config.txt";
+        if (File.Exists(configPath))
+        {
+            StreamReader reader = new StreamReader(configPath);
+            string data = reader.ReadToEnd();
+            IP = data;
+            reader.Close();
+        }
+        else
+        {
+            StreamWriter writer = new StreamWriter(configPath);
+            string data = IP;
+            writer.Write(data);
+            writer.Close();
+        }
 
         image_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         IPEndPoint ep1 = new IPEndPoint(IPAddress.Parse(IP), 50020);
