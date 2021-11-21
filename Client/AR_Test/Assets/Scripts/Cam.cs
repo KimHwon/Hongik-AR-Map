@@ -11,11 +11,12 @@ using System.Text;
 
 public class Cam : MonoBehaviour
 {
-    WebCamTexture webCamTexture;
-    Socket image_sock;
-    Socket message_sock;
+    WebCamTexture webCamTexture = null;
+    Socket image_sock = null;
+    Socket message_sock = null;
 
     string IP = "192.168.0.100";
+    byte[] ETX = new byte[] { 0x3 };
     
     // Start is called before the first frame update
     void Start()
@@ -59,12 +60,14 @@ public class Cam : MonoBehaviour
         {
             byte[] bytes = Encoding.UTF8.GetBytes("save");
             message_sock.Send(bytes);
+            message_sock.Send(ETX);
         }
     }
 
-    void OnApplicationQuit() {
-        image_sock.Close();
-        message_sock.Close();
+    void OnApplicationQuit()
+    {
+        if (image_sock != null) image_sock.Close();
+        if (message_sock != null) message_sock.Close();
     }
 
     IEnumerator TakePhoto()  // Start this Coroutine on some button click

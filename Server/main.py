@@ -1,8 +1,10 @@
 import cv2
-from .Config import *
-from .Socket import ImageSocket, MessageSocket
-from .ImageProcessing import compute_image, match_images, estimate_difference, decompose_transform
-from .Logger import get_logger
+from PIL import ImageFile
+
+from Config import *
+from Socket import ImageSocket, MessageSocket
+from ImageProcessing import compute_image, match_images, estimate_difference, decompose_transform
+from Logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -13,6 +15,8 @@ def neither_none(*args):
     return ret
 
 if __name__ == '__main__':
+    ImageFile.LOAD_TRUNCATED_IMAGES = True
+
     img_sock = ImageSocket(SOCKET_PORT)
     msg_sock = MessageSocket(SOCKET_PORT+1)
 
@@ -27,16 +31,16 @@ if __name__ == '__main__':
 
     last_pivot = (None, None, None)
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
-        msg = msg_sock.recv()
-        if not msg:
+        if (msg := msg_sock.recv()):
             if msg == 'save':
                 save_img = True
 
         jpg_file = img_sock.recv()
-        if jpg_file:
+        if not jpg_file:
             continue
     
         img, kp, des = compute_image(jpg_file)
+        if DEBUG: cv2.imshow('img', img)
         if neither_none(*last_pivot, kp, des):
             t_img, t_kp, t_des = last_pivot
             matches = match_images(des, t_des)
@@ -50,3 +54,6 @@ if __name__ == '__main__':
 
             cv2.imwrite(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png', img)
             save_img_idx += 1
+    
+    img_sock.send('q')
+    msg_sock.send('q')

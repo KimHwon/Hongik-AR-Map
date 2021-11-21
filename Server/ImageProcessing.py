@@ -7,27 +7,23 @@ import cv2
 import traceback
 from typing import *
 
-from .Config import *
-from .Logger import get_logger
+from Config import *
+from Logger import get_logger
 
 logger = get_logger(__name__)
-ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 
 Mat = np.ndarray
 FuncParam = ParamSpec('FuncParam')
 FuncRetType = TypeVar('FuncRetType')
-FuncType = Callable[FuncParam, FuncRetType]
-def ExceptionWrapper() -> Callable[[FuncType], FuncType]:
-    def decorator(func: FuncType) -> FuncType:
-        def wrapper(*args, **kwargs) -> FuncRetType:
-            try:
-                return func(*args, **kwargs)
-            except:
-                logger.error(traceback.format_exc())
-            return None
-        return wrapper
-    return decorator
+def ExceptionWrapper(func: Callable[FuncParam, FuncRetType]) -> Callable[FuncParam, FuncRetType]:
+    def wrapper(*args: FuncParam.args, **kwargs: FuncParam.kwargs) -> FuncRetType:
+        try:
+            return func(*args, **kwargs)
+        except:
+            logger.error(traceback.format_exc())
+        return None
+    return wrapper
 
 
 orb = cv2.ORB_create()
@@ -73,8 +69,8 @@ def estimate_difference(matches: Iterable[Mat],
         righty[i] = ey
     
     try:
-        r1, re1, _, _ = np.linalg.lstsq(leftx, rightx)  # x, residuals, rank, singular
-        r2, re2, _, _ = np.linalg.lstsq(lefty, righty)
+        r1, re1, _, _ = np.linalg.lstsq(leftx, rightx, rcond=None)  # x, residuals, rank, singular
+        r2, re2, _, _ = np.linalg.lstsq(lefty, righty, rcond=None)
         
     except np.linalg.LinAlgError:
         logger.info('LinAlgError')

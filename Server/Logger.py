@@ -1,6 +1,6 @@
 import logging
 
-from .Config import *
+from Config import *
 
 def get_logger(name: str = None):
     logger = logging.getLogger(name)

@@ -4,8 +4,8 @@ from queue import Queue
 import traceback
 from typing import *
 
-from .Config import *
-from .Logger import get_logger
+from Config import *
+from Logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -32,6 +32,7 @@ class AsyncSocket(Thread):
         self.serv_sock.bind(('', self.port))
         self.serv_sock.listen(1)
         self.cli_sock, cli_addr = self.serv_sock.accept()
+        logger.info(f'Connect to {cli_addr}')
 
         self.cli_sock.setblocking(not self.nonblock)
 
@@ -50,7 +51,7 @@ class AsyncSocket(Thread):
         self.serv_sock.close()
     
     def recv(self) -> Any:
-        if self.recv_que.not_empty():
+        if not self.recv_que.empty():
             return self.recv_que.get()
         return None
     
@@ -60,18 +61,16 @@ class AsyncSocket(Thread):
 
 class ImageSocket(AsyncSocket):
     def __init__(self, port: int):
-        AsyncSocket.__init__(port, False)
+        AsyncSocket.__init__(self, port, False)
         self.raws = []
 
     def callback(self):
-        if self.send_que.not_empty():
-            msg = self.send_que.get()
-            if msg == 'q':
+        if not self.send_que.empty():
+            if (msg := self.send_que.get()) == 'q':
                 raise CloseSocket()
         
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        idx = raw.find(b'\xff\xd8\xff')     # JPG magic bits
-        if idx < 0:
+        if (idx := raw.find(b'\xff\xd8\xff')) < 0:  # JPG magic bits
             self.raws.append(raw)
         else:
             self.raws.append(raw[:idx])
@@ -86,22 +85,18 @@ class ImageSocket(AsyncSocket):
 
 class MessageSocket(AsyncSocket):
     def __init__(self, port: int):
-        AsyncSocket.__init__(port, True)
+        AsyncSocket.__init__(self, port, True)
         self.raws = []
 
     def callback(self):
-        if self.send_que.not_empty():
-            msg = self.send_que.get()
-            if msg == 'q':
+        if not self.send_que.empty():
+            if (msg := self.send_que.get()) == 'q':
                 raise CloseSocket()
             else:
                 self.cli_sock.send(msg.encode('utf-8'))
         
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        idx = raw.find(b'\x03')     # ETX bit
-        if idx < 0:
-            self.raws.append(raw)
-        else:
+        while (idx := raw.find(b'\x03')) > 0:       # ETX bit
             self.raws.append(raw[:idx])
             full_raw = b''.join(self.raws)
 
@@ -109,4 +104,6 @@ class MessageSocket(AsyncSocket):
                 self.recv_que.put(full_raw.decode('utf-8'))
 
             self.raws.clear()
-            self.raws.append(raw[idx:])
+            raw = raw[idx+1:]
+        self.raws.append(raw)
+        
