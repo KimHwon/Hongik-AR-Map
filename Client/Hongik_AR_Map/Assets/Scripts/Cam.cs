@@ -41,6 +41,7 @@ public class Cam : MonoBehaviour
             writer.Write(data);
             writer.Close();
         }
+        SetText("DebugText", IP);
 
         image_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         IPEndPoint ep1 = new IPEndPoint(IPAddress.Parse(IP), 50020);
@@ -62,12 +63,23 @@ public class Cam : MonoBehaviour
             message_sock.Send(bytes);
             message_sock.Send(ETX);
         }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Application.Quit(); 
+        }
     }
 
     void OnApplicationQuit()
     {
         if (image_sock != null) image_sock.Close();
-        if (message_sock != null) message_sock.Close();
+        if (message_sock != null)
+        {
+            byte[] bytes = Encoding.UTF8.GetBytes("exit");
+            message_sock.Send(bytes);
+            message_sock.Send(ETX);
+            message_sock.Close();
+        }
     }
 
     IEnumerator TakePhoto()  // Start this Coroutine on some button click
