@@ -78,7 +78,7 @@ def estimate_difference(matches: Iterable[Mat],
         r2 = np.array([0., 1., 0.])
         re1 = re2 = [np.Infinity]
     
-    return np.array([
+    return np.stack([
         r1,
         r2,
         np.array([0., 0., 1.])

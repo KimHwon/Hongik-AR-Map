@@ -32,8 +32,12 @@ if __name__ == '__main__':
     last_pivot = (None, None, None)
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
         if (msg := msg_sock.recv()):
-            if msg == 'save':
-                save_img = True
+            match msg:
+                case 'save':
+                    save_img = True
+                case 'exit':
+                    img_sock.send('q')
+                    msg_sock.send('q')
 
         jpg_file = img_sock.recv()
         if not jpg_file:

@@ -1,3 +1,4 @@
+import logging
 import socket
 from threading import Thread
 from queue import Queue
@@ -14,13 +15,19 @@ class CloseSocket(Exception):
 
 class AsyncSocket(Thread):
     def __init__(self, port: int, nonblock: bool = False):
-        Thread.__init__(self)
+        Thread.__init__(self, daemon=True)
 
         self.send_que = Queue()
         self.recv_que = Queue()
 
         self.port = port
         self.nonblock = nonblock
+
+    def close(self):
+        if self.cli_sock:
+            self.cli_sock.close()
+        if self.serv_sock:
+            self.serv_sock.close()
 
     def callback(self):
         raise NotImplementedError(self.__class__)
@@ -31,24 +38,28 @@ class AsyncSocket(Thread):
 
         self.serv_sock.bind(('', self.port))
         self.serv_sock.listen(1)
-        self.cli_sock, cli_addr = self.serv_sock.accept()
-        logger.info(f'Connect to {cli_addr}')
 
-        self.cli_sock.setblocking(not self.nonblock)
+        while True:     # keep try re-connect
+            self.cli_sock, cli_addr = self.serv_sock.accept()
+            logger.info(f'Connect to {cli_addr}')
 
-        while True:
-            try:
-                self.callback()
-            except BlockingIOError:
-                pass
-            except CloseSocket:
-                break
-            except:
-                logger.error(traceback.format_exc())
-                break
+            self.cli_sock.setblocking(not self.nonblock)
 
-        self.cli_sock.close()
-        self.serv_sock.close()
+            while True:
+                try:
+                    self.callback()
+                except BlockingIOError:
+                    pass
+                except CloseSocket:
+                    logger.info(f'Close to {cli_addr}')
+                    self.cli_sock.close()
+                    self.cli_sock = None
+                    break
+                except:
+                    logger.error(traceback.format_exc())
+                    self.close()
+                    return
+        
     
     def recv(self) -> Any:
         if not self.recv_que.empty():
@@ -90,13 +101,15 @@ class MessageSocket(AsyncSocket):
 
     def callback(self):
         if not self.send_que.empty():
-            if (msg := self.send_que.get()) == 'q':
-                raise CloseSocket()
-            else:
-                self.cli_sock.send(msg.encode('utf-8'))
+            msg = self.send_que.get()
+            match msg:
+                case 'q':
+                    raise CloseSocket()
+                case _:
+                    self.cli_sock.send(msg.encode('utf-8'))
         
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        while (idx := raw.find(b'\x03')) > 0:       # ETX bit
+        while (idx := raw.find(b'\x03')) >= 0:       # ETX bit
             self.raws.append(raw[:idx])
             full_raw = b''.join(self.raws)
 
