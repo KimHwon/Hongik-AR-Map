@@ -142,7 +142,7 @@ class DataSocket(AsyncSocket):
             case DataSocket.SENSOR:
                 datas = []
                 for i in range(3*4):
-                    s, e = i*3+1, i*3+4
+                    s, e = i*4+1, i*4+5
                     datas.append(struct.unpack('<f', raw[s:e])[0])
                 x,y,z, a,b,c, n,m,k, u,v,w = datas
                 self.recv_que.put((DataSocket.SENSOR,
