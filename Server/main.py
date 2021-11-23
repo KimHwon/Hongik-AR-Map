@@ -2,7 +2,7 @@ import cv2
 from PIL import ImageFile
 
 from Config import *
-from Socket import ImageSocket, MessageSocket
+from Socket import ImageSocket, DataSocket
 from ImageProcessing import compute_image, match_images, estimate_difference, decompose_transform
 from Logger import get_logger
 
@@ -18,10 +18,10 @@ if __name__ == '__main__':
     ImageFile.LOAD_TRUNCATED_IMAGES = True
 
     img_sock = ImageSocket(SOCKET_PORT)
-    msg_sock = MessageSocket(SOCKET_PORT+1)
+    data_sock = DataSocket(SOCKET_PORT+1)
 
     img_sock.start()
-    msg_sock.start()
+    data_sock.start()
 
     save_img = False
     save_img_idx = 0
@@ -31,13 +31,22 @@ if __name__ == '__main__':
 
     last_pivot = (None, None, None)
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
-        if (msg := msg_sock.recv()):
-            match msg:
-                case 'save':
-                    save_img = True
-                case 'exit':
-                    img_sock.send('q')
-                    msg_sock.send('q')
+        if (zipped := data_sock.recv()):
+            match zipped[0]:
+                case DataSocket.TEXT:
+                    logger.info(('TEXT', zipped[1]))
+                    match zipped[1]:
+                        case 'save':
+                            save_img = True
+                        case 'exit':
+                            img_sock.send('q')
+                            data_sock.send('q')
+                case DataSocket.SENSOR:
+                    _, x,y,z, a,b,c, n,m,k, u,v,w = zipped
+                    logger.info(('SENSOR', x,y,z, a,b,c, n,m,k, u,v,w))
+                case DataSocket.DEST:
+                    dest = zipped[1]
+                    logger.info(('DEST', dest))
 
         jpg_file = img_sock.recv()
         if not jpg_file:
@@ -60,4 +69,5 @@ if __name__ == '__main__':
             save_img_idx += 1
     
     img_sock.send('q')
-    msg_sock.send('q')
+    data_sock.send('q')
+    
