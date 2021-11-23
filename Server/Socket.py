@@ -1,7 +1,7 @@
-import logging
 import socket
 from threading import Thread
 from queue import Queue
+import struct
 import traceback
 from typing import *
 
@@ -71,6 +71,8 @@ class AsyncSocket(Thread):
 
 
 class ImageSocket(AsyncSocket):
+    JPG_MAGIC  = b'\xff\xd8\xff'
+
     def __init__(self, port: int):
         AsyncSocket.__init__(self, port, False)
         self.raws = []
@@ -81,7 +83,7 @@ class ImageSocket(AsyncSocket):
                 raise CloseSocket()
         
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        if (idx := raw.find(b'\xff\xd8\xff')) < 0:  # JPG magic bits
+        if (idx := raw.find(ImageSocket.JPG_MAGIC)) < 0:
             self.raws.append(raw)
         else:
             self.raws.append(raw[:idx])
@@ -94,11 +96,27 @@ class ImageSocket(AsyncSocket):
             self.raws.append(raw[idx:])
 
 
-class MessageSocket(AsyncSocket):
+class DataSocket(AsyncSocket):
+    TEXT    = b'\x01'
+    SENSOR  = b'\x02'
+    DEST    = b'\x03'
+    ETX     = b'\x03'
+
     def __init__(self, port: int):
         AsyncSocket.__init__(self, port, True)
-        self.raws = []
 
+    def wrap_message(self, msg: str) -> bytes:
+        raw = bytearray(SOCKET_BUFFER)
+        raw[0] = DataSocket.TEXT
+        i = 1
+        for b in msg.encode('utf-8'):
+            if i >= SOCKET_BUFFER-1:
+                break
+            raw[i] = b
+            i += 1
+        raw[i] = DataSocket.ETX
+        return bytes(raw)
+        
     def callback(self):
         if not self.send_que.empty():
             msg = self.send_que.get()
@@ -106,17 +124,41 @@ class MessageSocket(AsyncSocket):
                 case 'q':
                     raise CloseSocket()
                 case _:
-                    self.cli_sock.send(msg.encode('utf-8'))
+                    self.cli_sock.send(self.wrap_message(msg))
+        else:   # if nothing to say, send zero-filled buffer
+            self.cli_sock.send(bytes(SOCKET_BUFFER))
         
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        while (idx := raw.find(b'\x03')) >= 0:       # ETX bit
-            self.raws.append(raw[:idx])
-            full_raw = b''.join(self.raws)
+        match raw[0]:
+            case DataSocket.TEXT:
+                raw = bytearray()
+                for b in raw[1:]:
+                    if b == DataSocket.ETX:
+                        break
+                    raw.append(b)
+                msg = raw.decode('utf-8')
+                self.recv_que.put((DataSocket.TEXT, msg))
+                
+            case DataSocket.SENSOR:
+                datas = []
+                for i in range(3*4):
+                    s, e = i*3+1, i*3+4
+                    datas.append(struct.unpack('<f', raw[s:e])[0])
+                x,y,z, a,b,c, n,m,k, u,v,w = datas
+                self.recv_que.put((DataSocket.SENSOR,
+                    x,y,z,  # location
+                    a,b,c,  # attitude
+                    n,m,k,  # angular
+                    u,v,w   # compass
+                ))
 
-            if len(full_raw) > 0:
-                self.recv_que.put(full_raw.decode('utf-8'))
-
-            self.raws.clear()
-            raw = raw[idx+1:]
-        self.raws.append(raw)
+            case DataSocket.DEST:
+                conv = {
+                    b'T': 'T',  # T
+                    b'S': 'S',  # S
+                    b'1': '1',  # Z1
+                    b'2': '2',  # Z2
+                    b'D': 'D'   # Dorm
+                }
+                self.recv_que.put((DataSocket.DEST, conv[raw[1]]))
         
