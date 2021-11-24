@@ -34,7 +34,7 @@ if __name__ == '__main__':
         if (zipped := data_sock.recv()):
             match zipped[0]:
                 case DataSocket.TEXT:
-                    logger.info(('TEXT', zipped[1]))
+                    logger.info(('TEXT', zipped))
                     match zipped[1]:
                         case 'save':
                             save_img = True
