@@ -13,10 +13,20 @@ public class Cam : MonoBehaviour
 {
     WebCamTexture webCamTexture = null;
     Socket image_sock = null;
-    Socket message_sock = null;
+    Socket data_sock = null;
 
     string IP = "192.168.0.100";
-    byte[] ETX = new byte[] { 0x3 };
+
+    enum DataFormat : byte
+    {
+        EMPTY   = 0x00,
+        TEXT    = 0x01,
+        SENSOR  = 0x02,
+        DEST    = 0x03
+    };
+    const byte ETX = 0x03;
+
+    byte[] buffer = new byte[1024];
     
     // Start is called before the first frame update
     void Start()
@@ -25,7 +35,6 @@ public class Cam : MonoBehaviour
         GetComponent<Renderer>().material.mainTexture = webCamTexture; //Add Mesh Renderer to the GameObject to which this script is attached to
         webCamTexture.Play();
 
-        //SetText("DebugText", webCamTexture.width.ToString() + ", " + webCamTexture.height.ToString());
         string configPath = Application.persistentDataPath + "/config.txt";
         if (File.Exists(configPath))
         {
@@ -47,9 +56,9 @@ public class Cam : MonoBehaviour
         IPEndPoint ep1 = new IPEndPoint(IPAddress.Parse(IP), 50020);
         image_sock.Connect(ep1);
 
-        message_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        data_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         IPEndPoint ep2 = new IPEndPoint(IPAddress.Parse(IP), 50021);
-        message_sock.Connect(ep2);
+        data_sock.Connect(ep2);
 
         StartCoroutine("TakePhoto");
     }
@@ -57,32 +66,45 @@ public class Cam : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        for (int i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
         if (Input.touchCount > 0)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes("save");
-            message_sock.Send(bytes);
-            message_sock.Send(ETX);
+            int i;
+            byte[] msg = Encoding.UTF8.GetBytes("save");
+            buffer[0] = (byte)DataFormat.TEXT;
+            for (i = 0; i < Math.Min(buffer.Length-2, msg.Length); i++)
+                buffer[i+1] = msg[i];
+            buffer[i+1] = ETX;
         }
-
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            Application.Quit(); 
+            Application.Quit();
         }
+        data_sock.Send(buffer, 1024, SocketFlags.None); // Client must send first.
+
+        
+        data_sock.Receive(buffer, 1024, SocketFlags.None);
+        // do something with `buffer`.
     }
 
     void OnApplicationQuit()
     {
         if (image_sock != null) image_sock.Close();
-        if (message_sock != null)
+        if (data_sock != null)
         {
-            byte[] bytes = Encoding.UTF8.GetBytes("exit");
-            message_sock.Send(bytes);
-            message_sock.Send(ETX);
-            message_sock.Close();
+            int i;
+            byte[] msg = Encoding.UTF8.GetBytes("exit");
+            buffer[0] = (byte)DataFormat.TEXT;
+            for (i = 0; i < Math.Min(buffer.Length-2, msg.Length); i++)
+                buffer[i+1] = msg[i];
+            buffer[i+1] = ETX;
+
+            data_sock.Send(buffer, 1024, SocketFlags.None);
+            data_sock.Close();
         }
     }
 
-    IEnumerator TakePhoto()  // Start this Coroutine on some button click
+    IEnumerator TakePhoto()
     {
         while (true) {
             yield return new WaitForSeconds(.1f);
@@ -99,30 +121,11 @@ public class Cam : MonoBehaviour
 
             try
             {
-                //Encode to a PNG
+                //Encode to a JPG
                 byte[] bytes = photo.EncodeToJPG();
-                //Write out the PNG. Of course you have to substitute your_path for something sensible
 
-                /* Color[] pixels = photo.GetPixels();
-                byte[] bytes = new byte[webCamTexture.width * webCamTexture.height * 3];
-                int pixel = 0;
-                for (int i = 0, index = 0; i < webCamTexture.height; ++i)
-                {
-                    for (int j = 0; j < webCamTexture.width; ++j)
-                    {
-                        var color = pixels[pixel++];
-                        bytes[index++] = (byte)color.r;
-                        bytes[index++] = (byte)color.g;
-                        bytes[index++] = (byte)color.b;
-                    }
-                } */
-
-                byte[] size = BitConverter.GetBytes(bytes.Length);
                 SetText("DebugText", bytes.Length.ToString());
 
-                //image_sock.Send(size, SocketFlags.None);
-                //image_sock.Send(BitConverter.GetBytes(webCamTexture.width), SocketFlags.None);
-                //image_sock.Send(BitConverter.GetBytes(webCamTexture.height), SocketFlags.None);
                 image_sock.Send(bytes, SocketFlags.None);
             }
             catch (Exception e)
@@ -140,30 +143,5 @@ public class Cam : MonoBehaviour
                 textMesh.text = str;
             }
         }
-    }
-
-    byte[] Color32ArrayToByteArray(Color32[] colors)
-    {
-        if (colors == null || colors.Length == 0)
-            return null;
-
-        int lengthOfColor32 = Marshal.SizeOf(typeof(Color32));
-        int length = lengthOfColor32 * colors.Length;
-        byte[] bytes = new byte[length];
-
-        GCHandle handle = default(GCHandle);
-        try
-        {
-            handle = GCHandle.Alloc(colors, GCHandleType.Pinned);
-            IntPtr ptr = handle.AddrOfPinnedObject();
-            Marshal.Copy(ptr, bytes, 0, length);
-        }
-        finally
-        {
-            if (handle != default(GCHandle))
-                handle.Free();
-        }
-
-        return bytes;
     }
 }

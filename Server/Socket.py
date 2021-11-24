@@ -118,25 +118,15 @@ class DataSocket(AsyncSocket):
         return bytes(raw)
         
     def callback(self):
-        if not self.send_que.empty():
-            msg = self.send_que.get()
-            match msg:
-                case 'q':
-                    raise CloseSocket()
-                case _:
-                    self.cli_sock.send(self.wrap_message(msg))
-        else:   # if nothing to say, send zero-filled buffer
-            self.cli_sock.send(bytes(SOCKET_BUFFER))
-        
         raw = self.cli_sock.recv(SOCKET_BUFFER)
-        match raw[0]:
+        if raw:
+            head = raw[0].to_bytes(1, 'little')
+        else:
+            head = b'\x00'  # lost connection
+        match head:
             case DataSocket.TEXT:
-                raw = bytearray()
-                for b in raw[1:]:
-                    if b == DataSocket.ETX:
-                        break
-                    raw.append(b)
-                msg = raw.decode('utf-8')
+                idx = raw.find(DataSocket.ETX)
+                msg = raw[1:idx].decode('utf-8')
                 self.recv_que.put((DataSocket.TEXT, msg))
                 
             case DataSocket.SENSOR:
@@ -161,4 +151,18 @@ class DataSocket(AsyncSocket):
                     b'D': 'D'   # Dorm
                 }
                 self.recv_que.put((DataSocket.DEST, conv[raw[1]]))
+
+        if not self.send_que.empty():
+            match (msg := self.send_que.get()):
+                case 'q':
+                    raise CloseSocket()
+                case _:
+                    self.cli_sock.send(self.wrap_message(msg))
+        else:   # if nothing to say, send zero-filled buffer
+            try:
+                self.cli_sock.send(bytes(SOCKET_BUFFER))
+            except ConnectionAbortedError as err:
+                logger.info(err)
+                raise CloseSocket()
+        
         
