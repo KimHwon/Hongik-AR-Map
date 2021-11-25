@@ -1,5 +1,6 @@
 import traceback
 import numpy as np
+from scipy import spatial
 import io
 from PIL import Image, ImageFile
 import cv2
@@ -26,7 +27,7 @@ def ExceptionWrapper(func: Callable[FuncParam, FuncRetType]) -> Callable[FuncPar
     return wrapper
 
 
-orb = cv2.ORB_create()
+orb = cv2.ORB_create(scaleFactor=1.1)
 bfm = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
 
 
@@ -98,4 +99,31 @@ def decompose_transform(matrix: Mat) -> Tuple[Mat, Mat, Mat]:
         np.array([0., 0., 1.])
     ], axis=0).T
     return trans, scale, rotate
+
+@ExceptionWrapper
+@ExceptionWrapper
+def estimate_perspective(matches: Iterable[Mat], query_keypoints: Iterable[Mat], train_keypoints: Iterable[Mat],
+    image_shape: Tuple[float, float], normal: Mat) -> Tuple[Mat, Mat, Mat]:
+
+    src_pts = np.array([query_keypoints[m.queryIdx].pt for m in matches]).reshape(-1, 1, 2).astype(np.float32)
+    dst_pts = np.array([train_keypoints[m.trainIdx].pt for m in matches]).reshape(-1, 1, 2).astype(np.float32)
+
+    H, _ = cv2.findHomography(src_pts, dst_pts, cv2.RANSAC)
+
+    w, h = image_shape
+    f = FOCUS_LENGTH
+    K = np.array([      # camera intrinsic parameters
+        [f, 0, w/2],
+        [0, f, h/2],
+        [0, 0, 1]
+    ])
+    n, Rs, Ts, Ns = cv2.decomposeHomographyMat(H, K)
+    mxv, mxi = np.Inf, 0
+    for i in range(n):
+        dist = spatial.distance.cosine(Ns[i], normal)
+        if mxv < dist:
+            mxv, mxi = dist, i
     
+    Tx,Ty,Tz = Ts[mxi]
+    T = np.concatenate((Tx,Ty,Tz))
+    return H, Rs[mxi], T

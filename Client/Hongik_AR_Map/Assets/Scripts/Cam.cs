@@ -27,6 +27,9 @@ public class Cam : MonoBehaviour
     const byte ETX = 0x03;
 
     byte[] buffer = new byte[1024];
+
+    LocationInfo location;
+    AndroidJavaObject plugin;
     
     // Start is called before the first frame update
     void Start()
@@ -61,6 +64,14 @@ public class Cam : MonoBehaviour
         data_sock.Connect(ep2);
 
         StartCoroutine("TakePhoto");
+
+
+        //GPS
+        UnityEngine.Android.Permission.RequestUserPermission("android.permission.ACCESS_FINE_LOCATION");
+        //외부 저장소
+        UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.ExternalStorageWrite);
+        Input.location.Start(0.5f);
+
     }
 
     // Update is called once per frame
@@ -85,6 +96,28 @@ public class Cam : MonoBehaviour
         
         data_sock.Receive(buffer, 1024, SocketFlags.None);
         // do something with `buffer`.
+
+
+        if (!Input.location.isEnabledByUser)
+        {
+            SetText("DebugText", "Disabled");
+        }
+        else if (Input.location.status == LocationServiceStatus.Initializing)
+        {
+            SetText("DebugText", "Init");
+        }
+        else if (Input.location.status == LocationServiceStatus.Failed)
+        {
+            SetText("DebugText", "Failed");
+        }
+        else
+        {
+            location = Input.location.lastData;
+            float Lat = location.latitude;
+            float Long = location.longitude;
+            SetText("DebugText", Lat.ToString() + ", " + Long.ToString());
+        }
+
     }
 
     void OnApplicationQuit()
@@ -102,12 +135,14 @@ public class Cam : MonoBehaviour
             data_sock.Send(buffer, 1024, SocketFlags.None);
             data_sock.Close();
         }
+
+
     }
 
     IEnumerator TakePhoto()
     {
         while (true) {
-            yield return new WaitForSeconds(.1f);
+            yield return new WaitForSeconds(.5f);
             // NOTE - you almost certainly have to do this here:
             yield return new WaitForEndOfFrame(); 
 
@@ -124,7 +159,7 @@ public class Cam : MonoBehaviour
                 //Encode to a JPG
                 byte[] bytes = photo.EncodeToJPG();
 
-                SetText("DebugText", bytes.Length.ToString());
+                //SetText("DebugText", bytes.Length.ToString());
 
                 image_sock.Send(bytes, SocketFlags.None);
             }

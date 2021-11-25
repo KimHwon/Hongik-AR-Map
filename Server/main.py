@@ -1,10 +1,15 @@
 import cv2
 from PIL import ImageFile
+import numpy as np
 
 from Config import *
 from Socket import ImageSocket, DataSocket
-from ImageProcessing import compute_image, match_images, estimate_difference, decompose_transform
+from ImageProcessing import compute_image, match_images, estimate_difference, decompose_transform, estimate_perspective
 from Logger import get_logger
+
+import sys
+sys.path.insert(1, r'C:\Users\HYOWON\codes\ComputerGraphics\Server\test')
+import view2
 
 logger = get_logger(__name__)
 
@@ -30,6 +35,8 @@ if __name__ == '__main__':
         save_img_idx += 1
 
     last_pivot = (None, None, None)
+    last_img = None
+    last_no = np.array([0, 0, 1])
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
         if (zipped := data_sock.recv()):
             match zipped[0]:
@@ -61,8 +68,21 @@ if __name__ == '__main__':
             if re1 < RESIDUAL_THRESHOLD and re2 < RESIDUAL_THRESHOLD:
                 trans, scale, rotate = decompose_transform(tr_mat)
 
+                match_img = cv2.drawMatches(img, kp, last_img, t_kp, matches, None, flags=2)
+                cv2.imshow('cmp', match_img)
+                
+                h,w,_ = img.shape
+                H, R, T = estimate_perspective(matches, kp, t_kp, (w,h), np.array([0, 0, 1]))
+                
+                p = np.array([0, 0, 1])
+                p = np.dot(R, p)
+                p = p + T
+                view2.render(P=p)
+                logger.info(scale)
+
         if save_img:
             last_pivot = (img, kp, des)
+            last_img = img
             save_img = False
 
             cv2.imwrite(f'{BASE_DIR}/save-img/{save_img_idx:05d}.png', img)
