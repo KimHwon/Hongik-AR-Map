@@ -123,41 +123,41 @@ class DataSocket(AsyncSocket):
             head = raw[0].to_bytes(1, 'little')
         else:
             head = b'\x00'  # lost connection
-        match head:
-            case DataSocket.TEXT:
-                idx = raw.find(DataSocket.ETX)
-                msg = raw[1:idx].decode('utf-8')
-                self.recv_que.put((DataSocket.TEXT, msg))
+        
+        if head == DataSocket.TEXT:
+            idx = raw.find(DataSocket.ETX)
+            msg = raw[1:idx].decode('utf-8')
+            self.recv_que.put((DataSocket.TEXT, msg))
                 
-            case DataSocket.SENSOR:
-                datas = []
-                for i in range(3*4):
-                    s, e = i*4+1, i*4+5
-                    datas.append(struct.unpack('<f', raw[s:e])[0])
-                x,y,z, a,b,c, n,m,k, u,v,w = datas
-                self.recv_que.put((DataSocket.SENSOR,
-                    x,y,z,  # location
-                    a,b,c,  # attitude
-                    n,m,k,  # angular
-                    u,v,w   # compass
-                ))
+        elif head == DataSocket.SENSOR:
+            datas = []
+            for i in range(3*4):
+                s, e = i*4+1, i*4+5
+                datas.append(struct.unpack('<f', raw[s:e])[0])
+            x,y,z, a,b,c, n,m,k, u,v,w = datas
+            self.recv_que.put((DataSocket.SENSOR,
+                x,y,z,  # location
+                a,b,c,  # attitude
+                n,m,k,  # angular
+                u,v,w   # compass
+            ))
 
-            case DataSocket.DEST:
-                conv = {
-                    b'T': 'T',  # T
-                    b'S': 'S',  # S
-                    b'1': '1',  # Z1
-                    b'2': '2',  # Z2
-                    b'D': 'D'   # Dorm
-                }
-                self.recv_que.put((DataSocket.DEST, conv[raw[1]]))
+        elif head == DataSocket.DEST:
+            conv = {
+                b'T': 'T',  # T
+                b'S': 'S',  # S
+                b'1': '1',  # Z1
+                b'2': '2',  # Z2
+                b'D': 'D'   # Dorm
+            }
+            self.recv_que.put((DataSocket.DEST, conv[raw[1]]))
 
         if not self.send_que.empty():
-            match (msg := self.send_que.get()):
-                case 'q':
-                    raise CloseSocket()
-                case _:
-                    self.cli_sock.send(self.wrap_message(msg))
+            msg = self.send_que.get()
+            if msg == 'q':
+                raise CloseSocket()
+            else:
+                self.cli_sock.send(self.wrap_message(msg))
         else:   # if nothing to say, send zero-filled buffer
             try:
                 self.cli_sock.send(bytes(SOCKET_BUFFER))

@@ -15,10 +15,8 @@ logger = get_logger(__name__)
 
 
 Mat = np.ndarray
-FuncParam = ParamSpec('FuncParam')
-FuncRetType = TypeVar('FuncRetType')
-def ExceptionWrapper(func: Callable[FuncParam, FuncRetType]) -> Callable[FuncParam, FuncRetType]:
-    def wrapper(*args: FuncParam.args, **kwargs: FuncParam.kwargs) -> FuncRetType:
+def ExceptionWrapper(func):
+    def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
         except:
