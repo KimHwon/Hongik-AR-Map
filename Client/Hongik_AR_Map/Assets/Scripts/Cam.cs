@@ -14,8 +14,6 @@ public class Cam : MonoBehaviour
     Socket image_sock = null;
     Socket data_sock = null;
 
-    string IP = null;
-
     enum DataFormat : byte
     {
         EMPTY   = 0x00,
@@ -27,8 +25,7 @@ public class Cam : MonoBehaviour
 
     byte[] buffer = new byte[1024];
 
-    LocationInfo location;
-    AndroidJavaObject plugin;
+    bool onGPS = false;
     
     // Start is called before the first frame update
     void Start()
@@ -37,37 +34,47 @@ public class Cam : MonoBehaviour
         GetComponent<Renderer>().material.mainTexture = webCamTexture; //Add Mesh Renderer to the GameObject to which this script is attached to
         webCamTexture.Play();
 
-        IP = Loading.Instance.GetIP();
         data_sock = Loading.Instance.GetDatatSocket();
         image_sock = Loading.Instance.GetImageSocket();
 
         StartCoroutine("TakePhoto");
 
 
-        //GPS
+        // Require GPS permission.
         UnityEngine.Android.Permission.RequestUserPermission("android.permission.ACCESS_FINE_LOCATION");
-        //외부 저장소
-        UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.ExternalStorageWrite);
-        Input.location.Start(0.5f);
-
+        
+        Input.location.Start(5f, 5f);
     }
 
     // Update is called once per frame
     void Update()
     {
         for (int i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
+
         if (Input.touchCount > 0)
         {
-            int i;
-            byte[] msg = Encoding.UTF8.GetBytes("save");
-            buffer[0] = (byte)DataFormat.TEXT;
-            for (i = 0; i < Math.Min(buffer.Length-2, msg.Length); i++)
-                buffer[i+1] = msg[i];
-            buffer[i+1] = ETX;
+            FormatMessage("save");
         }
-        if (Input.GetKeyDown(KeyCode.Escape))
+        else if (Input.GetKeyDown(KeyCode.Escape))
         {
             Application.Quit();
+        }
+        else if (onGPS)
+        {
+            float[] datas = new float[12];
+            for (int x = 0; x < datas.Length; x++) datas[x] = 0f;
+
+            datas[0] = Input.location.lastData.latitude;
+            datas[1] = Input.location.lastData.longitude;
+            datas[2] = Input.location.lastData.altitude;
+
+            FormatSensor(datas);
+
+            SetText("DebugText", "Location: " + datas[0].ToString() + ", " + datas[1].ToString());
+        }
+        else
+        {
+            
         }
         
         data_sock.Send(buffer, 1024, SocketFlags.None); // Client must send first.
@@ -90,10 +97,7 @@ public class Cam : MonoBehaviour
         }
         else
         {
-            location = Input.location.lastData;
-            float Lat = location.latitude;
-            float Long = location.longitude;
-            SetText("DebugText", Lat.ToString() + ", " + Long.ToString());
+            onGPS = true;
         }
 
     }
@@ -103,12 +107,8 @@ public class Cam : MonoBehaviour
         if (image_sock != null) image_sock.Close();
         if (data_sock != null)
         {
-            int i;
-            byte[] msg = Encoding.UTF8.GetBytes("exit");
-            buffer[0] = (byte)DataFormat.TEXT;
-            for (i = 0; i < Math.Min(buffer.Length-2, msg.Length); i++)
-                buffer[i+1] = msg[i];
-            buffer[i+1] = ETX;
+            for (int i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
+            FormatMessage("save");
 
             data_sock.Send(buffer, 1024, SocketFlags.None);
             data_sock.Close();
@@ -144,6 +144,32 @@ public class Cam : MonoBehaviour
             catch (Exception e)
             {
                 SetText("DebugText", e.ToString());
+            }
+        }
+    }
+
+    void FormatMessage(string str)
+    {
+        int i;
+        byte[] msg = Encoding.UTF8.GetBytes(str);
+        buffer[0] = (byte)DataFormat.TEXT;
+        for (i = 0; i < Math.Min(buffer.Length-2, msg.Length); i++)
+            buffer[i+1] = msg[i];
+        buffer[i+1] = ETX;
+    }
+    void FormatSensor(float[] datas)
+    {
+        if (datas.Length != 12) return;
+
+        buffer[0] = (byte)DataFormat.SENSOR;
+        int i = 1;
+        for (int j = 0; j < 12; j++)
+        {
+            byte[] bytes = BitConverter.GetBytes(datas[j]);
+            for (int k = 0; k < bytes.Length; k++)
+            {
+                buffer[i] = bytes[k];
+                i++;
             }
         }
     }

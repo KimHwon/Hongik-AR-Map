@@ -50,8 +50,8 @@ class AsyncSocket(Thread):
                     self.callback()
                 except BlockingIOError:
                     pass
-                except CloseSocket:
-                    logger.info(f'Close to {cli_addr}')
+                except (CloseSocket, ConnectionAbortedError) as err:
+                    logger.info(f'Close to {cli_addr}: {err}')
                     self.cli_sock.close()
                     self.cli_sock = None
                     break
@@ -159,10 +159,6 @@ class DataSocket(AsyncSocket):
             else:
                 self.cli_sock.send(self.wrap_message(msg))
         else:   # if nothing to say, send zero-filled buffer
-            try:
-                self.cli_sock.send(bytes(SOCKET_BUFFER))
-            except ConnectionAbortedError as err:
-                logger.info(err)
-                raise CloseSocket()
+            self.cli_sock.send(bytes(SOCKET_BUFFER))
         
         

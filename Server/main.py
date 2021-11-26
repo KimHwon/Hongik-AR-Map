@@ -48,7 +48,7 @@ if __name__ == '__main__':
                     data_sock.send('q')
             elif zipped[0] == DataSocket.SENSOR:
                 _, x,y,z, a,b,c, n,m,k, u,v,w = zipped
-                logger.info(('SENSOR', x,y,z, a,b,c, n,m,k, u,v,w))
+                #logger.info(('SENSOR', x,y,z, a,b,c, n,m,k, u,v,w))
             elif zipped[0] == DataSocket.DEST:
                 dest = zipped[1]
                 logger.info(('DEST', dest))
