@@ -7,6 +7,7 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
+using System.IO;
 
 public class Loading : MonoBehaviour
 {
@@ -17,7 +18,7 @@ public class Loading : MonoBehaviour
     Socket image_sock = null;
     Socket data_sock = null;
 
-    string IP = "172.30.1.59";
+    string IP = "192.168.0.100";
 
     GameObject loadingSpinner = null;
     GameObject loadingText = null;
@@ -48,6 +49,22 @@ public class Loading : MonoBehaviour
     IEnumerator ConnectToServer()
     {
         WaitForSeconds wait = new WaitForSeconds(0.5f);
+
+        string configPath = Application.persistentDataPath + "/config.txt";
+        if (File.Exists(configPath))
+        {
+            StreamReader reader = new StreamReader(configPath);
+            string data = reader.ReadToEnd();
+            IP = data;
+            reader.Close();
+        }
+        else
+        {
+            StreamWriter writer = new StreamWriter(configPath);
+            string data = IP;
+            writer.Write(data);
+            writer.Close();
+        }
 
         for (int i = 1; i <= 20; i++)
         {

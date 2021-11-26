@@ -6,7 +6,6 @@ using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
-using System.IO;
 using System.Text;
 
 public class Cam : MonoBehaviour
@@ -31,28 +30,11 @@ public class Cam : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        IP = Loading.Instance.GetIP();
-
         webCamTexture = new WebCamTexture();
         GetComponent<Renderer>().material.mainTexture = webCamTexture; //Add Mesh Renderer to the GameObject to which this script is attached to
         webCamTexture.Play();
 
-        string configPath = Application.persistentDataPath + "/config.txt";
-        if (File.Exists(configPath))
-        {
-            StreamReader reader = new StreamReader(configPath);
-            string data = reader.ReadToEnd();
-            IP = data;
-            reader.Close();
-        }
-        else
-        {
-            StreamWriter writer = new StreamWriter(configPath);
-            string data = IP;
-            writer.Write(data);
-            writer.Close();
-        }
-
+        IP = Loading.Instance.GetIP();
         data_sock = Loading.Instance.GetDatatSocket();
         image_sock = Loading.Instance.GetImageSocket();
 
