@@ -32,21 +32,19 @@ if __name__ == '__main__':
     last_pivot = (None, None, None)
     while (cv2.waitKey(1) & 0xFF) != ord('q'):
         if (zipped := data_sock.recv()):
-            match zipped[0]:
-                case DataSocket.TEXT:
-                    logger.info(('TEXT', zipped))
-                    match zipped[1]:
-                        case 'save':
-                            save_img = True
-                        case 'exit':
-                            img_sock.send('q')
-                            data_sock.send('q')
-                case DataSocket.SENSOR:
-                    _, x,y,z, a,b,c, n,m,k, u,v,w = zipped
-                    logger.info(('SENSOR', x,y,z, a,b,c, n,m,k, u,v,w))
-                case DataSocket.DEST:
-                    dest = zipped[1]
-                    logger.info(('DEST', dest))
+            if zipped[0] == DataSocket.TEXT:
+                logger.info(('TEXT', zipped))
+                if zipped[1] == 'save':
+                    save_img = True
+                elif zipped[1] == 'exit':
+                    img_sock.send('q')
+                    data_sock.send('q')
+            elif zipped[0] == DataSocket.SENSOR:
+                _, x,y,z, a,b,c, n,m,k, u,v,w = zipped
+                logger.info(('SENSOR', x,y,z, a,b,c, n,m,k, u,v,w))
+            elif zipped[0] == DataSocket.DEST:
+                dest = zipped[1]
+                logger.info(('DEST', dest))
 
         jpg_file = img_sock.recv()
         if not jpg_file:
