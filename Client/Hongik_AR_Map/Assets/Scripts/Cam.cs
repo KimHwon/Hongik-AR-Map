@@ -15,7 +15,7 @@ public class Cam : MonoBehaviour
     Socket image_sock = null;
     Socket data_sock = null;
 
-    string IP = "192.168.0.100";
+    string IP = null;
 
     enum DataFormat : byte
     {
@@ -31,6 +31,8 @@ public class Cam : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        IP = Loading.Instance.GetIP();
+
         webCamTexture = new WebCamTexture();
         GetComponent<Renderer>().material.mainTexture = webCamTexture; //Add Mesh Renderer to the GameObject to which this script is attached to
         webCamTexture.Play();
@@ -50,15 +52,9 @@ public class Cam : MonoBehaviour
             writer.Write(data);
             writer.Close();
         }
-        SetText("DebugText", IP);
 
-        image_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        IPEndPoint ep1 = new IPEndPoint(IPAddress.Parse(IP), 50020);
-        image_sock.Connect(ep1);
-
-        data_sock = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-        IPEndPoint ep2 = new IPEndPoint(IPAddress.Parse(IP), 50021);
-        data_sock.Connect(ep2);
+        data_sock = Loading.Instance.GetDatatSocket();
+        image_sock = Loading.Instance.GetImageSocket();
 
         StartCoroutine("TakePhoto");
     }
@@ -80,9 +76,9 @@ public class Cam : MonoBehaviour
         {
             Application.Quit();
         }
+        
         data_sock.Send(buffer, 1024, SocketFlags.None); // Client must send first.
 
-        
         data_sock.Receive(buffer, 1024, SocketFlags.None);
         // do something with `buffer`.
     }
