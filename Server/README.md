@@ -1,3 +1,3 @@
 # Server
 
-For test, run `python test/recv.py`
+Run `python main.py` to start.

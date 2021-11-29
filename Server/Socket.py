@@ -50,8 +50,8 @@ class AsyncSocket(Thread):
                     self.callback()
                 except BlockingIOError:
                     pass
-                except CloseSocket:
-                    logger.info(f'Close to {cli_addr}')
+                except (CloseSocket, ConnectionAbortedError) as err:
+                    logger.info(f'Close to {cli_addr}: {err}')
                     self.cli_sock.close()
                     self.cli_sock = None
                     break
@@ -116,6 +116,20 @@ class DataSocket(AsyncSocket):
             i += 1
         raw[i] = DataSocket.ETX
         return bytes(raw)
+    
+    def wrap_vector(self, vec: list) -> bytes:
+        raw = bytearray(SOCKET_BUFFER)
+        if len(vec) != 3:
+            return bytes(raw)
+
+        raw[0] = DataSocket.SENSOR
+        i = 1
+        for b in struct.pack('<fff', *vec):
+            if i >= SOCKET_BUFFER-1:
+                break
+            raw[i] = b
+            i += 1
+        return bytes(raw)
         
     def callback(self):
         raw = self.cli_sock.recv(SOCKET_BUFFER)
@@ -131,15 +145,15 @@ class DataSocket(AsyncSocket):
                 
         elif head == DataSocket.SENSOR:
             datas = []
-            for i in range(3*4):
+            for i in range(11):
                 s, e = i*4+1, i*4+5
                 datas.append(struct.unpack('<f', raw[s:e])[0])
-            x,y,z, a,b,c, n,m,k, u,v,w = datas
+            la,lo,al, qw,qx,qy,qz, vx,vy,vz, ry = datas
             self.recv_que.put((DataSocket.SENSOR,
-                x,y,z,  # location
-                a,b,c,  # attitude
-                n,m,k,  # angular
-                u,v,w   # compass
+                la,lo,al,       # location
+                qw,qx,qy,qz,    # attitude
+                vx,vy,vz,       # acceleration
+                ry              # compass
             ))
 
         elif head == DataSocket.DEST:
@@ -155,15 +169,16 @@ class DataSocket(AsyncSocket):
 
         if not self.send_que.empty():
             msg = self.send_que.get()
-            if msg == 'q':
-                raise CloseSocket()
+            if isinstance(msg, str):
+                if msg == 'q':
+                    raise CloseSocket()
+                else:
+                    self.cli_sock.send(self.wrap_message(msg))
+            elif isinstance(msg, list):
+                self.cli_sock.send(self.wrap_vector(msg))
             else:
-                self.cli_sock.send(self.wrap_message(msg))
-        else:   # if nothing to say, send zero-filled buffer
-            try:
                 self.cli_sock.send(bytes(SOCKET_BUFFER))
-            except ConnectionAbortedError as err:
-                logger.info(err)
-                raise CloseSocket()
+        else:   # if nothing to say, send zero-filled buffer
+            self.cli_sock.send(bytes(SOCKET_BUFFER))
         
         
