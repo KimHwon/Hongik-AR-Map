@@ -1,6 +1,6 @@
 import os
 
-DEBUG       = True
+DEBUG       = False
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
 DATABASE    = 'http://hwon233.ml/comgr/database.pickle'
 
