@@ -22,7 +22,7 @@ public class Arrow : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (false)  //목적지 입력 안됨
+        if (!Destination.Instance.GetIsInputFilled())  //목적지 입력 안됨
         {
             return;
         }
