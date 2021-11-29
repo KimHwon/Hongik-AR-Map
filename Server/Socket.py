@@ -158,11 +158,12 @@ class DataSocket(AsyncSocket):
 
         elif head == DataSocket.DEST:
             conv = {
-                b'T': 'T',  # T
-                b'S': 'S',  # S
-                b'1': '1',  # Z1
-                b'2': '2',  # Z2
-                b'D': 'D'   # Dorm
+                # ASCII
+                84: 'T',  # T
+                83: 'S',  # S
+                49: '1',  # Z1
+                50: '2',  # Z2
+                68: 'D'   # Dorm
             }
             self.recv_que.put((DataSocket.DEST, conv[raw[1]]))
 

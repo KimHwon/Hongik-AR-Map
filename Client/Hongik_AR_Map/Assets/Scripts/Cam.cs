@@ -11,8 +11,10 @@ using System.Text;
 public class Cam : MonoBehaviour
 {
     WebCamTexture webCamTexture = null;
-    Socket image_sock = null;
-    Socket data_sock = null;
+
+    Socket image_sock = Loading.Instance.GetImageSocket();
+    Socket data_sock = Loading.Instance.GetDatatSocket();
+    string IP = Loading.Instance.GetIP();
 
     enum DataFormat : byte
     {
@@ -25,7 +27,7 @@ public class Cam : MonoBehaviour
 
     byte[] buffer = new byte[1024];
 
-    bool onGPS = false;
+    Boolean isInputCompleted = false;
     
     // Start is called before the first frame update
     void Start()
@@ -33,9 +35,6 @@ public class Cam : MonoBehaviour
         webCamTexture = new WebCamTexture();
         GetComponent<Renderer>().material.mainTexture = webCamTexture; //Add Mesh Renderer to the GameObject to which this script is attached to
         webCamTexture.Play();
-
-        data_sock = Loading.Instance.GetDatatSocket();
-        image_sock = Loading.Instance.GetImageSocket();
 
         StartCoroutine("TakePhoto");
 
@@ -78,7 +77,6 @@ public class Cam : MonoBehaviour
         }
         
         data_sock.Send(buffer, 1024, SocketFlags.None); // Client must send first.
-
         data_sock.Receive(buffer, 1024, SocketFlags.None);
         // do something with `buffer`.
 
@@ -107,8 +105,12 @@ public class Cam : MonoBehaviour
         if (image_sock != null) image_sock.Close();
         if (data_sock != null)
         {
-            for (int i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
-            FormatMessage("save");
+            int i;
+            byte[] msg = Encoding.UTF8.GetBytes("exit");
+            buffer[0] = (byte)DataFormat.TEXT;
+            for (i = 0; i < Math.Min(buffer.Length - 2, msg.Length); i++)
+                buffer[i + 1] = msg[i];
+            buffer[i + 1] = ETX;
 
             data_sock.Send(buffer, 1024, SocketFlags.None);
             data_sock.Close();
