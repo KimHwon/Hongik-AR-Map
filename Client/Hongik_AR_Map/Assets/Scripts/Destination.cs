@@ -28,6 +28,18 @@ public class Destination : MonoBehaviour
 
     byte[] buffer = new byte[1024];
 
+    public static Destination Instance
+    {
+        get
+        {
+            if (null == instance)
+            {
+                return null;
+            }
+            return instance;
+        }
+    }
+
     public void Navigate()
     {
         isInputFilled = true;
@@ -73,6 +85,16 @@ public class Destination : MonoBehaviour
     void Awake()
     {
         notice = FindObjectOfType<Notice>();
+
+        if (null == instance)
+        {
+            instance = this;
+            DontDestroyOnLoad(this.gameObject);
+        }
+        else
+        {
+            Destroy(this.gameObject);
+        }
     }
 
     public Boolean GetIsInputFilled()
