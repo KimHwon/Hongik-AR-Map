@@ -8,12 +8,16 @@ using System.Text;
 
 public class Sensor : MonoBehaviour
 {
-    public static double latitude;
-    public static double longitude;
-    public static double altitude;
+    public static float latitude;
+    public static float longitude;
+    public static float altitude;
+    public static Quaternion attitude;
     public static bool gpsStarted = false;
+    public static bool isProperCamera = true;
     private static LocationInfo location;
     private static WaitForSeconds second;
+
+    public static Gyroscope m_Gyro;
 
     Socket data_sock = null;
     string IP = null;
@@ -44,7 +48,7 @@ public class Sensor : MonoBehaviour
             yield break;
         }
 
-        Input.location.Start(.5f, .5f);
+        Input.location.Start(1f, 1f);
         SetText("loc", "Awaiting initialization");
 
         int maxWait = 10;
@@ -65,36 +69,55 @@ public class Sensor : MonoBehaviour
             SetText("loc", "Unable to determine device location");
             yield break;
         }
-        SetText("loc", "ok");
         gpsStarted = true;
-
-        while (gpsStarted)
-        {
-            int i;
-            for (i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
-            location = Input.location.lastData;
-            latitude = location.latitude * 1.0d;
-            longitude = location.longitude * 1.0d;
-            altitude = location.altitude * 1.0d;
-            
-            byte[] msg = Encoding.UTF8.GetBytes("save");
-            buffer[0] = (byte)DataFormat.SENSOR;
-            for (i = 0; i < Math.Min(buffer.Length - 2, msg.Length); i++)
-                buffer[i + 1] = msg[i];
-            buffer[i + 1] = ETX;
-
-            data_sock.Send(buffer, 1024, SocketFlags.None); // Client must send first.
-
-            data_sock.Receive(buffer, 1024, SocketFlags.None);
-            // do something with `buffer`.
-            yield return second;
-        }
+        SetText("loc", "ok");
+        
+        yield break;
     }
 
-    // Update is called once per frame
-    void Update()
-    {
+    void Update(){
+        if(gpsStarted){
+            location = Input.location.lastData;
+            latitude = location.latitude;
+            longitude = location.longitude;
+            altitude = location.altitude;
+        }
+        int i;
+        for (i = 0; i < buffer.Length; i++) buffer[i] = (byte)DataFormat.EMPTY;
+        m_Gyro = Input.gyro;
+        attitude = m_Gyro.attitude;
+        Vector3 m_Vector = attitude * Vector3.up;
 
+        isProperCamera = true;
+
+        // if Mobile is not in 45 to 135 degree, Send Message 
+        if (!(Mathf.Abs(GetAngle(m_Vector, Vector3.up)) >= 45 && Mathf.Abs(GetAngle(m_Vector, Vector3.up)) <= 135))
+        {
+            isProperCamera = false;
+        }
+        float qw = attitude.w;
+        float qx = attitude.x;
+        float qy = attitude.y;
+        float qz = attitude.z;
+
+        float[] tmp = new float[7] { latitude, longitude, altitude, qw, qx, qy, qz };
+        byte[] msg = new byte[tmp.Length * sizeof(float)];
+
+        Buffer.BlockCopy(tmp, 0, msg, 0, msg.Length);
+        buffer[0] = (byte)DataFormat.SENSOR;
+        for (i = 0; i < Math.Min(buffer.Length - 2, msg.Length); i++)
+            buffer[i + 1] = msg[i];
+        buffer[i + 1] = ETX;
+        data_sock.Send(buffer, 1024, SocketFlags.None);
+    }
+
+    void OnGUI()
+    {
+        // if User do not hold Camera properly
+        if (!isProperCamera)
+        {
+            GUI.Label(new Rect(0, 0, Screen.width / 2, Screen.height / 2), "Please Hold the Camera Properly");
+        }
     }
 
     public static void StopGPS()
@@ -103,6 +126,13 @@ public class Sensor : MonoBehaviour
         {
             gpsStarted = false;
             Input.location.Stop();
+        }
+    }
+
+    float GetAngle(Vector3 v1, Vector3 v2)
+    {
+        {
+            return Mathf.Acos(Vector3.Dot(v1, v2) / Vector3.Magnitude(v1) / Vector3.Magnitude(v2)) * Mathf.Rad2Deg;
         }
     }
 

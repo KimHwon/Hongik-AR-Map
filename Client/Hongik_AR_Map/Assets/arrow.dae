@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset><contributor><author></author><authoring_tool>FBX COLLADA exporter</authoring_tool><comments></comments></contributor><created>2021-11-29T08:41:43Z</created><keywords></keywords><modified>2021-11-29T08:41:43Z</modified><revision></revision><subject></subject><title></title><unit meter="1.000000" name="centimeter"></unit><up_axis>Y_UP</up_axis></asset>
+  <library_materials>
+    <material id="arrow_material" name="arrow_material">
+      <instance_effect url="#arrow_material-fx"/>
+    </material>
+  </library_materials>
+  <library_effects>
+    <effect id="arrow_material-fx" name="arrow_material">
+      <profile_COMMON>
+        <technique sid="standard">
+          <phong>
+            <emission>
+              <color sid="emission">0.000000  0.274510 0.568627 1.000000</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">0.000000  0.000000 0.000000 1.000000</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0.349020  0.321569 1.000000 1.000000</color>
+            </diffuse>
+            <specular>
+              <color sid="specular">0.000000  0.010980 0.022745 1.000000</color>
+            </specular>
+            <shininess>
+              <float sid="shininess">19.977479</float>
+            </shininess>
+            <reflective>
+              <color sid="reflective">0.000000  0.000000 0.000000 1.000000</color>
+            </reflective>
+            <reflectivity>
+              <float sid="reflectivity">1.000000</float>
+            </reflectivity>
+            <transparent opaque="RGB_ZERO">
+              <color sid="transparent">1.000000  1.000000 1.000000 1.000000</color>
+            </transparent>
+            <transparency>
+              <float sid="transparency">0.000000</float>
+            </transparency>
+          </phong>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_geometries>
+    <geometry id="arrow_model-lib" name="arrow_modelMesh">
+      <mesh>
+        <source id="arrow_model-POSITION">
+          <float_array id="arrow_model-POSITION-array" count="18">
+0.002058 0.000000 -2.352060
+0.002058 0.500000 0.000000
+-1.467940 0.000000 1.067940
+0.002058 0.000000 0.000000
+0.002058 -0.500000 0.000000
+1.472060 0.000000 1.067940
+</float_array>
+          <technique_common>
+            <accessor source="#arrow_model-POSITION-array" count="6" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="arrow_model-Normal0">
+          <float_array id="arrow_model-Normal0-array" count="180">
+0.435483 -0.880522 0.187181
+0.435483 -0.880522 0.187181
+0.435483 -0.880522 0.187181
+-0.435483 0.880522 -0.187181
+-0.435483 0.880522 -0.187181
+-0.435483 0.880522 -0.187181
+-0.587758 0.000000 -0.809037
+-0.587758 0.000000 -0.809037
+-0.587758 0.000000 -0.809037
+-0.587758 0.000000 -0.809037
+-0.587758 0.000000 -0.809037
+-0.587758 0.000000 -0.809037
+0.587758 0.000000 0.809037
+0.587758 0.000000 0.809037
+0.587758 0.000000 0.809037
+0.587758 0.000000 -0.809037
+0.587758 0.000000 -0.809037
+0.587758 0.000000 -0.809037
+0.587758 0.000000 -0.809037
+0.587758 0.000000 -0.809037
+0.587758 0.000000 -0.809037
+-0.587758 0.000000 0.809037
+-0.587758 0.000000 0.809037
+-0.587758 0.000000 0.809037
+0.435483 -0.880522 -0.187181
+0.435483 -0.880522 -0.187181
+0.435483 -0.880522 -0.187181
+-0.435483 0.880522 0.187181
+-0.435483 0.880522 0.187181
+-0.435483 0.880522 0.187181
+0.435483 0.880522 0.187181
+0.435483 0.880522 0.187181
+0.435483 0.880522 0.187181
+-0.435483 -0.880522 -0.187181
+-0.435483 -0.880522 -0.187181
+-0.435483 -0.880522 -0.187181
+-1.000000 0.000000 -0.000000
+-1.000000 0.000000 -0.000000
+-1.000000 0.000000 -0.000000
+1.000000 0.000000 0.000000
+1.000000 0.000000 0.000000
+1.000000 0.000000 0.000000
+-1.000000 0.000000 -0.000000
+-1.000000 0.000000 -0.000000
+-1.000000 0.000000 -0.000000
+1.000000 0.000000 0.000000
+1.000000 0.000000 0.000000
+1.000000 0.000000 0.000000
+-0.587758 0.000000 0.809037
+-0.587758 0.000000 0.809037
+-0.587758 0.000000 0.809037
+0.587758 0.000000 0.809037
+0.587758 0.000000 0.809037
+0.587758 0.000000 0.809037
+-0.435483 -0.880522 0.187181
+-0.435483 -0.880522 0.187181
+-0.435483 -0.880522 0.187181
+0.435483 0.880522 -0.187181
+0.435483 0.880522 -0.187181
+0.435483 0.880522 -0.187181
+</float_array>
+          <technique_common>
+            <accessor source="#arrow_model-Normal0-array" count="60" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="arrow_model-UV0">
+          <float_array id="arrow_model-UV0-array" count="120">
+85.106796 -32.132702
+0.031997 9.396380
+-61.449799 -32.132702
+-61.449799 -32.132702
+0.031997 9.396380
+85.106796 -32.132702
+-0.065554 0.000000
+71.468903 0.000000
+-0.065554 19.684999
+71.468903 0.000000
+-0.065554 0.000000
+-0.065554 -19.684999
+-0.065554 -19.684999
+-0.065554 0.000000
+71.468903 0.000000
+-0.065554 0.000000
+-71.599998 0.000000
+-0.065554 -19.684999
+-71.599998 0.000000
+-0.065554 0.000000
+-0.065554 19.684999
+-0.065554 -19.684999
+-71.599998 0.000000
+-0.065554 0.000000
+-61.513802 32.263802
+-0.031997 -9.265280
+85.042801 32.263802
+85.042801 32.263802
+-0.031997 -9.265280
+-61.513802 32.263802
+85.106796 32.132702
+-61.449799 32.132702
+0.031997 -9.396380
+0.031997 -9.396380
+-61.449799 32.132702
+85.106796 32.132702
+-92.600700 0.000000
+0.000000 -19.684999
+0.000000 0.000000
+0.000000 0.000000
+0.000000 -19.684999
+-92.600700 0.000000
+-92.600700 0.000000
+0.000000 0.000000
+0.000000 19.684999
+0.000000 19.684999
+0.000000 0.000000
+-92.600700 0.000000
+-0.065554 19.684999
+-0.065554 0.000000
+-71.599998 0.000000
+-0.065554 19.684999
+71.468903 0.000000
+-0.065554 0.000000
+61.513802 -32.263802
+0.031997 9.265280
+-85.042801 -32.263802
+-85.042801 -32.263802
+0.031997 9.265280
+61.513802 -32.263802
+</float_array>
+          <technique_common>
+            <accessor source="#arrow_model-UV0-array" count="60" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="arrow_model-VERTEX">
+          <input semantic="POSITION" source="#arrow_model-POSITION"/>
+        </vertices>
+        <polylist count="20" material="arrow_material"><input semantic="VERTEX" offset="0" source="#arrow_model-VERTEX"/><input semantic="NORMAL" offset="1" source="#arrow_model-Normal0"/><input semantic="TEXCOORD" offset="2" set="0" source="#arrow_model-UV0"/><vcount>3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 3 </vcount><p> 0 0 0 1 1 1 2 2 2 2 3 3 1 4 4 0 5 5 3 6 6 2 7 7 1 8 8 2 9 9 3 10 10 4 11 11 4 12 12 3 13 13 2 14 14 3 15 15 5 16 16 4 17 17 5 18 18 3 19 19 1 20 20 4 21 21 5 22 22 3 23 23 5 24 24 4 25 25 0 26 26 0 27 27 4 28 28 5 29 29 0 30 30 2 31 31 4 32 32 4 33 33 2 34 34 0 35 35 0 36 36 4 37 37 3 38 38 3 39 39 4 40 40 0 41 41 0 42 42 3 43 43 1 44 44 1 45 45 3 46 46 0 47 47 1 48 48 3 49 49 5 50 50 1 51 51 2 52 52 3 53 53 5 54 54 1 55 55 0 56 56 0 57 57 1 58 58 5 59 59</p></polylist>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_lights>
+    <light id="top_light-light" name="top_light-light">
+      <technique_common>
+        <directional>
+          <color sid="color">1.000000 1.000000 1.000000</color>
+        </directional>
+      </technique_common>
+      <technique profile="MAYA">
+        <intensity sid="intensity">1.000000</intensity>
+      </technique>
+    </light>
+    <light id="bottom_light-light" name="bottom_light-light">
+      <technique_common>
+        <directional>
+          <color sid="color">1.000000 1.000000 1.000000</color>
+        </directional>
+      </technique_common>
+      <technique profile="MAYA">
+        <intensity sid="intensity">0.300000</intensity>
+      </technique>
+    </light>
+  </library_lights>
+  <library_visual_scenes>
+    <visual_scene id="Arrow" name="Arrow">
+      <node name="arrow_root" id="arrow_root" sid="arrow_root"><matrix sid="matrix">0.010000 0.000000 0.000000 0.000000 0.000000 0.010000 0.000000 0.000000 0.000000 0.000000 0.010000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix><extra><technique profile="FCOLLADA"><visibility>1.000000</visibility></technique></extra><node name="arrow_model" id="arrow_model" sid="arrow_model"><matrix sid="matrix">10.000000 0.000000 0.000000 0.000000 0.000000 0.000000 -10.000000 0.000000 0.000000 10.000000 0.000000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix><instance_geometry url="#arrow_model-lib"><bind_material><technique_common><instance_material symbol="arrow_material" target="#arrow_material"/></technique_common></bind_material></instance_geometry><extra><technique profile="FCOLLADA"><visibility>1.000000</visibility></technique></extra></node></node>
+      <node name="top_light" id="top_light" sid="top_light"><matrix sid="matrix">0.904078 0.257315 -0.341221 0.000000 0.156907 -0.942519 -0.295022 -0.137100 -0.397521 0.213183 -0.892485 -0.329500 0.000000 0.000000 0.000000 1.000000</matrix><instance_light url="#top_light-light"/><extra><technique profile="FCOLLADA"><visibility>1.000000</visibility></technique></extra></node>
+      <node name="bottom_light" id="bottom_light" sid="bottom_light"><matrix sid="matrix">0.988037 -0.041812 0.148443 0.000000 0.000000 0.962546 0.271120 0.037500 -0.154219 -0.267876 0.951030 0.187300 0.000000 0.000000 0.000000 1.000000</matrix><instance_light url="#bottom_light-light"/><extra><technique profile="FCOLLADA"><visibility>1.000000</visibility></technique></extra></node>
+      <extra><technique profile="MAX3D"><frame_rate>29.970030</frame_rate></technique><technique profile="FCOLLADA"><start_time>0.000000</start_time><end_time>6.673333</end_time></technique></extra>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#Arrow"></instance_visual_scene>
+  </scene>
+</COLLADA>
