@@ -42,21 +42,13 @@ public class Sensor : MonoBehaviour
     // Start is called before the first frame update
     IEnumerator Start()
     {
-        if (!SystemInfo.supportsGyroscope)
-        {
-            Debug.Log("Device does not support Gyroscopoe");
-            yield break;
-        }
-
         m_Gyro.enabled = true;
         Debug.Log("Gyro Sensor initialization");
         if (!Input.location.isEnabledByUser)
         {
-            SetText("loc", "GPS is not enabled");
             yield break;
         }
         Input.location.Start(1f, 1f);
-        SetText("loc", "Awaiting initialization");
 
         int maxWait = 10;
         while (Input.location.status == LocationServiceStatus.Initializing && maxWait > 0)
@@ -67,17 +59,14 @@ public class Sensor : MonoBehaviour
 
         if (maxWait < 1)
         {
-            SetText("loc", "Timed out");
             yield break;
         }
 
         if (Input.location.status == LocationServiceStatus.Failed)
         {
-            SetText("loc", "Unable to determine device location");
             yield break;
         }
         gpsStarted = true;
-        SetText("loc", "ok");
         
         yield break;
     }
@@ -140,19 +129,6 @@ public class Sensor : MonoBehaviour
     {
         {
             return Mathf.Acos(Vector3.Dot(v1, v2) / Vector3.Magnitude(v1) / Vector3.Magnitude(v2)) * Mathf.Rad2Deg;
-        }
-    }
-
-    void SetText(string name, string str)
-    {
-        GameObject debugText = GameObject.Find(name);
-        if (debugText != null)
-        {
-            TextMesh textMesh = debugText.GetComponent("TextMesh") as TextMesh;
-            if (textMesh != null)
-            {
-                textMesh.text = str;
-            }
         }
     }
 }

@@ -16,8 +16,6 @@ public class Arrow : MonoBehaviour
     void Start()
     {
         arrow = GameObject.Find("Arrow");
-        //arrow.SetActive(false);
-        arrow.SetActive(true);
     }
 
     // Update is called once per frame
@@ -29,23 +27,26 @@ public class Arrow : MonoBehaviour
         }
         data_sock.Receive(buffer, 1024, SocketFlags.None);
         float x, y, z;
-        x = BitConverter.ToSingle(buffer, 1);
+        z = -BitConverter.ToSingle(buffer, 1);
         y = BitConverter.ToSingle(buffer, 5);
-        z = BitConverter.ToSingle(buffer, 9);
-        x = 0; y = 0; z = 1;
+        x = BitConverter.ToSingle(buffer, 9);
+        Debug.Log(x);
+        Debug.Log(y);
+        Debug.Log(z);
         if (x == 0 && y == 0 && z == 0)
         {
-            arrow.SetActive(false);
             isArrowActive = false;
             return;
         }
-        arrow.SetActive(true);
+        Debug.Log("asd");
         isArrowActive = true;
         Vector3 arrowVector = new Vector3(x, y, z);
         transform.rotation = Quaternion.LookRotation(arrowVector);
-        Quaternion q = Sensor.attitude;
-        q.w *= -1;
-        transform.rotation = Sensor.attitude;
+        Quaternion q = Quaternion.Inverse(Sensor.attitude);
+        Quaternion q2 = q;
+        q.x = q2.z;
+        q.z = -q2.x;
+        transform.rotation = q * transform.rotation;
     }
 
     void OnGUI()
