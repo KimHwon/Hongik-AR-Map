@@ -16,7 +16,8 @@ public class Arrow : MonoBehaviour
     void Start()
     {
         arrow = GameObject.Find("Arrow");
-        arrow.SetActive(false);
+        //arrow.SetActive(false);
+        arrow.SetActive(true);
     }
 
     // Update is called once per frame
@@ -31,6 +32,7 @@ public class Arrow : MonoBehaviour
         x = BitConverter.ToSingle(buffer, 1);
         y = BitConverter.ToSingle(buffer, 5);
         z = BitConverter.ToSingle(buffer, 9);
+        x = 0; y = 0; z = 1;
         if (x == 0 && y == 0 && z == 0)
         {
             arrow.SetActive(false);

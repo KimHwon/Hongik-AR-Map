@@ -42,12 +42,19 @@ public class Sensor : MonoBehaviour
     // Start is called before the first frame update
     IEnumerator Start()
     {
+        if (!SystemInfo.supportsGyroscope)
+        {
+            Debug.Log("Device does not support Gyroscopoe");
+            yield break;
+        }
+
+        m_Gyro.enabled = true;
+        Debug.Log("Gyro Sensor initialization");
         if (!Input.location.isEnabledByUser)
         {
             SetText("loc", "GPS is not enabled");
             yield break;
         }
-
         Input.location.Start(1f, 1f);
         SetText("loc", "Awaiting initialization");
 
