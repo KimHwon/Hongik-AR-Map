@@ -50,21 +50,21 @@ class ImageProcessor:
         else:
             return np.array([0, 0, 0]), None
         
-        dist_sum = []
+        mind, minz, mini, minm = np.inf, None, None, None
         for z in cand_zones:
             for idx, data in self.database[z].items():
                 if (matches := self.match_images(des, data['des'])) is None:
                     continue
                 dsum = sum([m.distance for m in matches])
-                dist_sum.append((z, idx, dsum))
+                if dsum < mind:
+                    mind, minz, mini, minm = dsum, z, idx, matches
         
-        for z, i, dsum in sorted(dist_sum, key=lambda tp : tp[2]):
-            if dsum < DISTANCE_THRESHOLD:
-                Tr, r1, r2 = self.estimate_difference(matches, kp, self.database[z][i]['kp'])
-                if r1 < RESIDUAL_THRESHOLD and r2 < RESIDUAL_THRESHOLD:
-                    head_vec = self.database[z][i]['dir'][destination]
-                    H, R, T = self.estimate_perspective(matches, kp, self.database[z][i]['kp'], (w,h), np.array([0, 0, 1]))
-                    return np.dot(R, head_vec) + T, self.database[z][i]
+        if not minz is None and mind < DISTANCE_THRESHOLD:
+            Tr, r1, r2 = self.estimate_difference(minm, kp, self.database[minz][mini]['kp'])
+            if r1 < RESIDUAL_THRESHOLD and r2 < RESIDUAL_THRESHOLD:
+                head_vec = self.database[minz][mini]['dir'][destination]
+                H, R, T = self.estimate_perspective(minm, kp, self.database[minz][mini]['kp'], (w,h), np.array([0, 0, 1]))
+                return np.dot(R, head_vec) + T, self.database[minz][mini]
                     
         return np.array([0, 0, 0]), None
 
@@ -75,6 +75,7 @@ class ImageProcessor:
         copyreg.pickle(cv2.KeyPoint().__class__, lambda p: (cv2.KeyPoint, (*p.pt, p.size, p.angle, p.response, p.octave, p.class_id)))
 
         database = {}
+        logger.info('Fetching database...')
         if validators.url(path):
             res = requests.get(path)
             res.raise_for_status()
