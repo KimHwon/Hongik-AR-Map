@@ -2,11 +2,13 @@ import os
 
 DEBUG       = True
 BASE_DIR    = os.path.dirname(os.path.abspath(__file__))
+DATABASE    = os.path.join(BASE_DIR, 'database.pickle')
 
 SOCKET_PORT         = 50020
 SOCKET_BUFFER       = 1024
 
 MATCH_FILTER        = 20
-RESIDUAL_THRESHOLD  = 20000
+RESIDUAL_THRESHOLD  = 200000
+DISTANCE_THRESHOLD  = 700
 
 FOCUS_LENGTH        = 1.7
