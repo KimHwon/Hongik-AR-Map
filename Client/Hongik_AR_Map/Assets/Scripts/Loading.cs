@@ -8,20 +8,32 @@ using System.Net;
 using System.Net.Sockets;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Text;
 
 public class Loading : MonoBehaviour
 {
-    private static Loading instance = null;
+    private static Loading instance = null; // for singleton
 
     Boolean connectionRefused = false;
 
     Socket image_sock = null;
     Socket data_sock = null;
 
-    string IP = "192.168.0.100";
+    string IP = "172.30.1.59";
 
     GameObject loadingSpinner = null;
     GameObject loadingText = null;
+
+    enum DataFormat : byte
+    {
+        EMPTY = 0x00,
+        TEXT = 0x01,
+        SENSOR = 0x02,
+        DEST = 0x03
+    };
+    const byte ETX = 0x03;
+
+    byte[] buffer = new byte[1024];
 
     public static Loading Instance
     {
@@ -35,7 +47,6 @@ public class Loading : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
     void Start()
     {
         loadingSpinner = GameObject.Find("Image");
@@ -81,7 +92,7 @@ public class Loading : MonoBehaviour
                 loadingSpinner.SetActive(false);
                 loadingText.SetActive(false);
 
-                SceneManager.LoadScene("SampleScene");
+                SceneManager.LoadScene("Home");
                 yield break;
             }
             catch (Exception e)
@@ -102,12 +113,6 @@ public class Loading : MonoBehaviour
 
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
-
     void Awake()
     {
         if (null == instance)
@@ -121,6 +126,7 @@ public class Loading : MonoBehaviour
         }
     }
 
+    // singleton
     public Socket GetDatatSocket()
     {
         return data_sock;
